@@ -85,13 +85,19 @@ class Card():
 
     ranks = ["A","2", "3", "4", "5", "6", "7", "8", "9", "10", "J", "Q", "K"]
     
-    def __init__(self, s, r):
+    used_card = {}
+    def __init__(self, s: str, r: str):
+        '''
+        カード画像のSurfaceを生成する
+        引数1 s: カードの絵柄
+        引数2 r: カードの数字
+        '''
         self.r = r
         self.s = s
         self.img = pg.transform.rotozoom(pg.image.load(f'{MAIN_DIR}/playingcard-mini/{__class__.card[s][r]}'), 0, 2.0)
         self.rct = self.img.get_rect()
         self.rct.center = (800, 450)
-
+    
     def __int__(self) -> int:
         '''
         カードの数字を返す関数
@@ -110,7 +116,7 @@ class Card():
     
     def update(self, screen: pg.Surface):
         screen.blit(self.img, self.rct)
-        
+       
 
 class Deck():
     '''
@@ -264,10 +270,11 @@ class Stand(pg.sprite.Sprite):
 def main():
     pg.display.set_caption('black jack')
     screen = pg.display.set_mode((WIDTH, HEIGHT))  
+    
     screen = pg.display.set_mode((WIDTH, HEIGHT))  
     screen.fill((70, 128, 79))
     pg.mouse.set_visible(True)  # マウスカーソル表示
-    pg.mouse.set_visible(True)  # マウスカーソル表示
+
     
     player_cards = pg.sprite.Group()  # プレイヤーのカードを保存するスプリットグループ
     dealer_cards = pg.sprite.Group()  # ディーラーのカードを保存するスプリットグループ
@@ -287,6 +294,7 @@ def main():
     p.total += int(p1) + int(p2)
     d.total += int(d1) + int(d2)
     
+
     print(p.total)
     tmr = 0
     clock = pg.time.Clock()
