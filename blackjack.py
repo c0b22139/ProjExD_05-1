@@ -4,12 +4,17 @@ import math
 import random
 import pygame as pg
 from pygame.sprite import AbstractGroup
+import time
 
 WIDTH = 1600
 HEIGHT = 900
 MAIN_DIR = os.path.split(os.path.abspath(__file__))[0]
 
-class Card:
+
+class Card():
+    '''
+    カードの情報を保存し、絵柄と数字を返すクラス
+    '''
     card = {
         "h":
             {
@@ -76,6 +81,9 @@ class Card:
                 "K": 'k13@2x.png'
             }
         }
+    suits = ['h', 's', 'd', 'k']
+
+    ranks = ["A","2", "3", "4", "5", "6", "7", "8", "9", "10", "J", "Q", "K"]
     
     def __init__(self, s, r):
         self.r = r
@@ -83,9 +91,129 @@ class Card:
         self.img = pg.transform.rotozoom(pg.image.load(f'{MAIN_DIR}/playingcard-mini/{__class__.card[s][r]}'), 0, 2.0)
         self.rct = self.img.get_rect()
         self.rct.center = (800, 450)
-        
+
+    def __int__(self) -> int:
+        '''
+        カードの数字を返す関数
+        戻り値num: カードの数字
+        '''
+        if self.r == 'J' or self.r == 'Q' or self.r == 'K':
+            num = 10
+        elif self.r == 'A':
+            num = 1
+        else:
+            num = int(self.r)
+        return num
+    
+    def __str__(self):
+        return self.s
+    
     def update(self, screen: pg.Surface):
         screen.blit(self.img, self.rct)
+        
+
+class Deck():
+    '''
+    カードをシャッフルし、山札とするクラス
+    このクラスを利用することで重複をなくす
+    '''
+    def __init__(self):
+        self.cards = []
+        for i in Card.suits:
+            for j in Card.ranks:
+                self.cards.append(Card(i, j))
+        random.shuffle(self.cards)
+
+    def draw(self) -> Card:
+        '''
+        シャッフルされたカードのリストから要素を取り出す関数
+        戻り値: Cardクラスのインスタンス
+        '''
+        if len(self.cards) == 0:
+            return
+        return self.cards.pop()
+
+
+class Image(pg.sprite.Sprite):
+    '''
+    カードのSurfaceを作成するクラス
+    '''
+    def __init__(self, s: str, r: int, xy: tuple[int, int]):
+        '''
+        引数1: カードの絵柄
+        引数2: カードの数字
+        '''
+        super().__init__()
+        self.s = s
+        self.r = r
+        self.image = pg.transform.rotozoom(pg.image.load(f'{MAIN_DIR}/playingcard-mini/{Card.card[s][r]}'), 0, 1.5)
+        self.rect = self.image.get_rect()
+        self.rect.center = xy
+
+
+class Player():
+    '''
+    プレイヤーのトータルを保存し、バースト判定を行うクラス
+    '''
+    def __init__(self):
+        self.total = 0
+        self.ofer = False
+        
+    def match(self):
+        '''
+        トータルからバーストしていないか確認する関数
+        '''
+        if self.total == 21:
+            return True
+        
+        elif self.total < 21:
+            return True
+        
+        else:
+            return False
+
+'''
+class Game():
+    def __init__(self):
+        self.deck = Deck()
+        self.p = Player()
+        self.d = Player()
+        
+    def draw_img(self, card, xy):
+        Image(card, xy)
+        
+    def play_game(self):
+        pc1 = self.deck.draw()
+        dc1 = self.deck.draw()
+        pc2 = self.deck.draw()
+        dc2 = self.deck.draw()
+        self.p.total += int(pc1) + int(pc2)
+        self.d.total += int(dc1) + int(dc2)
+        
+'''
+'''
+class Button(pg.sprite.Sprite):
+    def __init__(self, text, b_color: tuple[int, int, int], hw: tuple[int, int], xy: tuple[int, int]):
+        super().__init__()
+        
+        self.text = text
+        self.font = pg.font.Font(None, 50)
+        
+        self.b_color = b_color
+        self.sf = pg.Surface(hw)
+        self.xy = xy
+        self.hw = hw
+        
+        self.button = pg.draw.rect(self.sf, self.b_color, self.hw)
+        self.rect = self.sf.get_rect()
+        self.f_color = (0, 0, 0)
+        self.tx = self.font.render(self.text, 0, self.f_color)
+        
+        self.rect.center = self.xy
+    def update(self):
+        self.tx = self.font.render(self.text, 0, self.color)
+        self.sf.blit(self.tx, self.rect)
+'''
         
 
 class Hit(pg.sprite.Sprite):
@@ -101,10 +229,11 @@ class Hit(pg.sprite.Sprite):
         super().__init__()
         gara = ["h", "s", "d", "k"]
         num = ["A", "2", "3", "4", "5", "6", "7", "8", "9", "10", "J", "Q", "K"]
-        self.img = pg.transform.rotozoom(pg.image.load(f'{MAIN_DIR}/playingcard-mini/{Card.card[random.choice(gara)][random.choice(num)]}'), 0, 2.0)
+        # self.img = pg.transform.rotozoom(pg.image.load(f'{MAIN_DIR}/playingcard-mini/{Card.card[random.choice(gara)][random.choice(num)]}'), 0, 1.5)
+        self.img = deck.draw()
         self.rct = self.img.get_rect()
-        self.rct.centerx = card.rct.centerx + 20*hit_num
-        self.rct.centery = card.rct.centery + 20*hit_num
+        self.rct.centerx = 850 + 100*hit_num
+        self.rct.centery = 900-225
 
     def update(self, screen: pg.Surface):
         screen.blit(self.img, self.rct)
@@ -131,15 +260,33 @@ class Stand(pg.sprite.Sprite):
         if self.life < 0:
             self.kill()
 
-    
 
 def main():
     pg.display.set_caption('black jack')
-    screen = pg.display.set_mode((WIDTH, HEIGHT))
-    # 背景
-    card = Card("d",'A')
+    screen = pg.display.set_mode((WIDTH, HEIGHT))  
+    screen.fill((70, 128, 79))
+    pg.mouse.set_visible(True)  # マウスカーソル表示
+    
+    player_cards = pg.sprite.Group()  # プレイヤーのカードを保存するスプリットグループ
+    dealer_cards = pg.sprite.Group()  # ディーラーのカードを保存するスプリットグループ
+    #buttons = pg.sprite.Group()
     hit = pg.sprite.Group()
     stand = pg.sprite.Group()
+    
+    p = Player()
+    d = Player()
+    
+    deck = Deck()
+    p1 = deck.draw() 
+    p2 = deck.draw()
+    d1 = deck.draw()
+    d2 = deck.draw()
+    
+    p.total += int(p1) + int(p2)
+    d.total += int(d1) + int(d2)
+    
+    print(p.total)
+    tmr = 0
     clock = pg.time.Clock()
     tmr = 0
     hit_num = 0  # プレイヤーがそのラウンドでヒットした回数
@@ -151,17 +298,32 @@ def main():
             # h押下でヒット
             if event.type == pg.KEYDOWN and event.key == pg.K_h:
                 hit_num += 1
-                hit.add(Hit(card, hit_num))
+                p3 = deck.draw()
+                p.total += int(p3)
+                player_cards.add(Image(str(p3), p3.r, (850+hit_num*100, 900-225)))
+                print(p.total)
+                if p.match() == False:
+                    pg.display.update()
+                    time.sleep(1)
+                    return
             
             # s押下でスタンド
             if event.type == pg.KEYDOWN and event.key == pg.K_s:
                 hit_num = 0  # ヒット回数のリセット
                 stand.add(Stand(60))
             
-        card.update(screen)
+        player_cards.add(Image(str(p1), p1.r, (750, 900-225)))
+        player_cards.add(Image(str(p2), p2.r, (850, 900-225)))
+        dealer_cards.add(Image(str(d1), d1.r, (750, 225)))
+        dealer_cards.add(Image(str(d2), d2.r, (750+100*1, 225)))
+        player_cards.draw(screen)
+        dealer_cards.draw(screen)
+        
+        #buttons.add(Button('hit', (255, 0, 0), (50, 50), (0, 0)))
+        #buttons.update()
+        pg.display.update()
         hit.update(screen)
         stand.update(screen)
-        pg.display.update()
         tmr += 1
         clock.tick(50)
         
