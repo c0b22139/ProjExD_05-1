@@ -264,7 +264,9 @@ class Stand(pg.sprite.Sprite):
 def main():
     pg.display.set_caption('black jack')
     screen = pg.display.set_mode((WIDTH, HEIGHT))  
+    screen = pg.display.set_mode((WIDTH, HEIGHT))  
     screen.fill((70, 128, 79))
+    pg.mouse.set_visible(True)  # マウスカーソル表示
     pg.mouse.set_visible(True)  # マウスカーソル表示
     
     player_cards = pg.sprite.Group()  # プレイヤーのカードを保存するスプリットグループ
@@ -304,7 +306,7 @@ def main():
                 print(p.total)
                 if p.match() == False:
                     pg.display.update()
-                    time.sleep(1)
+                    time.sleep(2)
                     return
             
             # s押下でスタンド
