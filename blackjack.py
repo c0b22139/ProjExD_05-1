@@ -216,12 +216,44 @@ class Button(pg.sprite.Sprite):
         self.tx = self.font.render(self.text, 0, self.color)
         self.sf.blit(self.tx, self.rect)
 '''
-        
+
+
+class Chip:
+    """
+    チップに関するクラス
+    """
+    def __init__(self, c: int):
+        self.value = c      # 手持ちのチップの数
+        self.bet = 0        # ベットするチップの数
+        self.now_bet = 0    # ベットされたチップの数
+        self.bet_flag = 0   # ベットしたかどうか
+        self.font = pg.font.Font(None, 100)
+        self.color = (128, 0, 0)
+        self.image_v = self.font.render(f"Chip: {self.value}", 0, self.color)
+        self.rect_v = self.image_v.get_rect()
+        self.rect_v.center = 180, HEIGHT-50
+        self.image_b = self.font.render(f"Bet?: {self.bet}", 0, self.color)
+        self.rect_b = self.image_b.get_rect()
+        self.rect_b.center = 130, 50
+        self.image_nb = self.font.render(f"Bet: {self.now_bet}", 0, self.color)
+        self.rect_nb = self.image_nb.get_rect()
+        self.rect_nb.center = 110, 50
+
+    def update(self, screen: pg.Surface):
+        self.image_v = self.font.render(f"Chip: {self.value}", 0, self.color)
+        screen.blit(self.image_v, self.rect_v)
+
+        if self.bet_flag == 0:
+            self.image_b = self.font.render(f"Bet?: {self.bet}", 0, self.color)
+            screen.blit(self.image_b, self.rect_b)
+        else:
+            self.image_nb = self.font.render(f"Bet: {self.now_bet}", 0, self.color)
+            screen.blit(self.image_nb, self.rect_nb)
+
 
 def main():
     pg.display.set_caption('black jack')
     screen = pg.display.set_mode((WIDTH, HEIGHT))  
-    screen.fill((70, 128, 79))
     pg.mouse.set_visible(True)  # マウスカーソル表示
     
     player_cards = pg.sprite.Group()  # プレイヤーのカードを保存するスプリットグループ
@@ -239,16 +271,33 @@ def main():
     
     p.total += int(p1) + int(p2)
     d.total += int(d1) + int(d2)
-    
+
+    chip = Chip(200)
     
     print(p.total)
     tmr = 0
     clock = pg.time.Clock()
 
     while True:
+        screen.fill((70, 128, 79))
+        key_lst = pg.key.get_pressed()
+
         for event in pg.event.get():
             if event.type == pg.QUIT:
                 return
+            
+            if chip.bet_flag == 0:  # チップ決定のためのキー操作
+                if event.type == pg.KEYDOWN and event.key == pg.K_UP:
+                    if chip.bet < chip.value :
+                        chip.bet += 1
+                if event.type == pg.KEYDOWN and event.key == pg.K_DOWN:
+                    if chip.bet > 0:
+                        chip.bet -= 1
+                if event.type == pg.KEYDOWN and event.key == pg.K_RETURN:
+                    chip.bet_flag = 1
+                    chip.now_bet = chip.bet
+                    chip.value -= chip.bet
+                    chip.bet = 0
             
         player_cards.add(Image(str(p1), p1.r, (750, 900-225)))
         player_cards.add(Image(str(p2), p2.r, (850, 900-225)))
@@ -259,6 +308,7 @@ def main():
         
         #buttons.add(Button('hit', (255, 0, 0), (50, 50), (0, 0)))
         #buttons.update()
+        chip.update(screen)
         pg.display.update()
         tmr += 1
         clock.tick(50)
